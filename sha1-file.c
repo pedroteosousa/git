@@ -1916,10 +1916,11 @@ static int freshen_loose_object(const struct object_id *oid)
 	return check_and_freshen(oid, 1);
 }
 
-static int freshen_packed_object(const struct object_id *oid)
+static int freshen_packed_object(struct repository *r,
+								 const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(the_repository, oid, &e))
+	if (!find_pack_entry(r, oid, &e))
 		return 0;
 	if (e.p->freshened)
 		return 1;
@@ -1940,7 +1941,7 @@ int write_object_file(const void *buf, unsigned long len, const char *type,
 	 */
 	write_object_file_prepare(the_hash_algo, buf, len, type, oid, hdr,
 				  &hdrlen);
-	if (freshen_packed_object(oid) || freshen_loose_object(oid))
+	if (freshen_packed_object(the_repository, oid) || freshen_loose_object(oid))
 		return 0;
 	return write_loose_object(oid, hdr, hdrlen, buf, len, 0);
 }
@@ -1960,7 +1961,7 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 
 	if (!(flags & HASH_WRITE_OBJECT))
 		goto cleanup;
-	if (freshen_packed_object(oid) || freshen_loose_object(oid))
+	if (freshen_packed_object(the_repository, oid) || freshen_loose_object(oid))
 		goto cleanup;
 	status = write_loose_object(oid, header, hdrlen, buf, len, 0);
 
