@@ -911,37 +911,40 @@ static int check_and_freshen_odb(struct object_directory *odb,
 	return check_and_freshen_file(path.buf, freshen);
 }
 
-static int check_and_freshen_local(const struct object_id *oid, int freshen)
+static int check_and_freshen_local(struct repository *r,
+								   const struct object_id *oid, int freshen)
 {
-	return check_and_freshen_odb(the_repository->objects->odb, oid, freshen);
+	return check_and_freshen_odb(r->objects->odb, oid, freshen);
 }
 
-static int check_and_freshen_nonlocal(const struct object_id *oid, int freshen)
+static int check_and_freshen_nonlocal(struct repository *r,
+									  const struct object_id *oid, int freshen)
 {
 	struct object_directory *odb;
 
-	prepare_alt_odb(the_repository);
-	for (odb = the_repository->objects->odb->next; odb; odb = odb->next) {
+	prepare_alt_odb(r);
+	for (odb = r->objects->odb->next; odb; odb = odb->next) {
 		if (check_and_freshen_odb(odb, oid, freshen))
 			return 1;
 	}
 	return 0;
 }
 
-static int check_and_freshen(const struct object_id *oid, int freshen)
+static int check_and_freshen(struct repository *r,
+							const struct object_id *oid, int freshen)
 {
-	return check_and_freshen_local(oid, freshen) ||
-	       check_and_freshen_nonlocal(oid, freshen);
+	return check_and_freshen_local(r, oid, freshen) ||
+	       check_and_freshen_nonlocal(r, oid, freshen);
 }
 
 int has_loose_object_nonlocal(const struct object_id *oid)
 {
-	return check_and_freshen_nonlocal(oid, 0);
+	return check_and_freshen_nonlocal(the_repository, oid, 0);
 }
 
 static int has_loose_object(const struct object_id *oid)
 {
-	return check_and_freshen(oid, 0);
+	return check_and_freshen(the_repository, oid, 0);
 }
 
 static void mmap_limit_check(size_t length)
@@ -1913,7 +1916,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 
 static int freshen_loose_object(const struct object_id *oid)
 {
-	return check_and_freshen(oid, 1);
+	return check_and_freshen(the_repository, oid, 1);
 }
 
 static int freshen_packed_object(struct repository *r,
