@@ -1068,13 +1068,17 @@ static inline int oidcmp(const struct object_id *oid1, const struct object_id *o
 	return hashcmp(oid1->hash, oid2->hash);
 }
 
-static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2)
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define hasheq(sha1, sha2) hasheq_algop(sha1, sha2, the_hash_algo)
+#endif
+static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *sha2,
+							   const struct git_hash_algo *algo)
 {
 	/*
 	 * We write this here instead of deferring to hashcmp so that the
 	 * compiler can properly inline it and avoid calling memcmp.
 	 */
-	if (the_hash_algo->rawsz == GIT_MAX_RAWSZ)
+	if (algo->rawsz == GIT_MAX_RAWSZ)
 		return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
 	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
