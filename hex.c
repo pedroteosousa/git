@@ -118,7 +118,8 @@ char *hash_to_hex(const unsigned char *hash)
 	return hash_to_hex_algop(hash, the_hash_algo);
 }
 
-char *oid_to_hex(const struct object_id *oid)
+char *oid_to_hex_algop(const struct object_id *oid,
+					   const struct git_hash_algo *algop)
 {
-	return hash_to_hex_algop(oid->hash, the_hash_algo);
+	return hash_to_hex_algop(oid->hash, algop);
 }

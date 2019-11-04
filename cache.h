@@ -1442,7 +1442,10 @@ char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
 char *sha1_to_hex(const unsigned char *sha1);						/* same static buffer */
 char *hash_to_hex(const unsigned char *hash);						/* same static buffer */
-char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define oid_to_hex(oid) oid_to_hex_algop(oid, the_hash_algo)
+#endif
+char *oid_to_hex_algop(const struct object_id *, const struct git_hash_algo *);	/* same static buffer */
 
 /*
  * Parse a 40-character hexadecimal object ID starting from hex, updating the
