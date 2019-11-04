@@ -409,10 +409,11 @@ out:
 	return ret;
 }
 
-static void fill_loose_path(struct strbuf *buf, const struct object_id *oid)
+static void fill_loose_path(struct repository *r, struct strbuf *buf,
+								 const struct object_id *oid)
 {
 	int i;
-	for (i = 0; i < the_hash_algo->rawsz; i++) {
+	for (i = 0; i < r->hash_algo->rawsz; i++) {
 		static char hex[] = "0123456789abcdef";
 		unsigned int val = oid->hash[i];
 		strbuf_addch(buf, hex[val >> 4]);
@@ -422,21 +423,22 @@ static void fill_loose_path(struct strbuf *buf, const struct object_id *oid)
 	}
 }
 
-static const char *odb_loose_path(struct object_directory *odb,
+static const char *odb_loose_path(struct repository *r,
+				  struct object_directory *odb,
 				  struct strbuf *buf,
 				  const struct object_id *oid)
 {
 	strbuf_reset(buf);
 	strbuf_addstr(buf, odb->path);
 	strbuf_addch(buf, '/');
-	fill_loose_path(buf, oid);
+	fill_loose_path(r, buf, oid);
 	return buf->buf;
 }
 
 const char *loose_object_path(struct repository *r, struct strbuf *buf,
 			      const struct object_id *oid)
 {
-	return odb_loose_path(r->objects->odb, buf, oid);
+	return odb_loose_path(r, r->objects->odb, buf, oid);
 }
 
 /*
@@ -895,7 +897,7 @@ static int check_and_freshen_odb(struct object_directory *odb,
 				 int freshen)
 {
 	static struct strbuf path = STRBUF_INIT;
-	odb_loose_path(odb, &path, oid);
+	odb_loose_path(the_repository, odb, &path, oid);
 	return check_and_freshen_file(path.buf, freshen);
 }
 
@@ -1060,7 +1062,7 @@ static int stat_loose_object(struct repository *r, const struct object_id *oid,
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
-		*path = odb_loose_path(odb, &buf, oid);
+		*path = odb_loose_path(r, odb, &buf, oid);
 		if (!lstat(*path, st))
 			return 0;
 	}
@@ -1082,7 +1084,7 @@ static int open_loose_object(struct repository *r,
 
 	prepare_alt_odb(r);
 	for (odb = r->objects->odb; odb; odb = odb->next) {
-		*path = odb_loose_path(odb, &buf, oid);
+		*path = odb_loose_path(r, odb, &buf, oid);
 		fd = git_open(*path);
 		if (fd >= 0)
 			return fd;
