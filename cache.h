@@ -1083,9 +1083,13 @@ static inline int hasheq_algop(const unsigned char *sha1, const unsigned char *s
 	return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
 
-static inline int oideq(const struct object_id *oid1, const struct object_id *oid2)
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define oideq(oid1, oid2) oideq_algop(oid1, oid2, the_hash_algo)
+#endif
+static inline int oideq_algop(const struct object_id *oid1, const struct object_id *oid2,
+							 const struct git_hash_algo *algo)
 {
-	return hasheq(oid1->hash, oid2->hash);
+	return hasheq_algop(oid1->hash, oid2->hash, algo);
 }
 
 static inline int is_null_sha1(const unsigned char *sha1)
