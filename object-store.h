@@ -180,8 +180,12 @@ int oid_object_info(struct repository *r, const struct object_id *, unsigned lon
 int hash_object_file(const void *buf, unsigned long len,
 		     const char *type, struct object_id *oid);
 
-int write_object_file(const void *buf, unsigned long len,
-		      const char *type, struct object_id *oid);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define write_object_file(buf, len, type, oid) \
+	repo_write_object_file(the_repository, buf, len, type, oid)
+#endif
+int repo_write_object_file(struct repository *r, const void *buf,
+			  unsigned long len, const char *type, struct object_id *oid);
 
 int hash_object_file_literally(const void *buf, unsigned long len,
 			       const char *type, struct object_id *oid,
