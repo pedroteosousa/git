@@ -276,11 +276,11 @@ const char *get_git_work_tree(void)
 	return the_repository->worktree;
 }
 
-char *get_object_directory(void)
+char *repo_get_object_directory(struct repository *r)
 {
-	if (!the_repository->objects->odb)
+	if (!r->objects->odb)
 		BUG("git environment hasn't been setup");
-	return the_repository->objects->odb->path;
+	return r->objects->odb->path;
 }
 
 int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
