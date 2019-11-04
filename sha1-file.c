@@ -1841,9 +1841,9 @@ static int create_tmpfile(struct strbuf *tmp, const char *filename)
 	return fd;
 }
 
-static int write_loose_object(const struct object_id *oid, char *hdr,
-			      int hdrlen, const void *buf, unsigned long len,
-			      time_t mtime)
+static int write_loose_object(struct repository *r,
+		   const struct object_id *oid, char *hdr, int hdrlen, const void *buf,
+		   unsigned long len, time_t mtime)
 {
 	int fd, ret;
 	unsigned char compressed[4096];
@@ -1853,12 +1853,13 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
 
-	loose_object_path(the_repository, &filename, oid);
+	loose_object_path(r, &filename, oid);
 
 	fd = create_tmpfile(&tmp_file, filename.buf);
 	if (fd < 0) {
 		if (errno == EACCES)
-			return error(_("insufficient permission for adding an object to repository database %s"), get_object_directory());
+			return error(_("insufficient permission for adding an object to repository database %s"),
+						 repo_get_object_directory(r));
 		else
 			return error_errno(_("unable to create temporary file"));
 	}
@@ -1948,7 +1949,7 @@ int write_object_file(const void *buf, unsigned long len, const char *type,
 	if (freshen_packed_object(the_repository, oid) ||
 		freshen_loose_object(the_repository, oid))
 		return 0;
-	return write_loose_object(oid, hdr, hdrlen, buf, len, 0);
+	return write_loose_object(the_repository, oid, hdr, hdrlen, buf, len, 0);
 }
 
 int hash_object_file_literally(const void *buf, unsigned long len,
@@ -1969,7 +1970,7 @@ int hash_object_file_literally(const void *buf, unsigned long len,
 	if (freshen_packed_object(the_repository, oid) ||
 		freshen_loose_object(the_repository, oid))
 		goto cleanup;
-	status = write_loose_object(oid, header, hdrlen, buf, len, 0);
+	status = write_loose_object(the_repository, oid, header, hdrlen, buf, len, 0);
 
 cleanup:
 	free(header);
@@ -1991,7 +1992,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	if (!buf)
 		return error(_("cannot read object for %s"), oid_to_hex(oid));
 	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX , type_name(type), (uintmax_t)len) + 1;
-	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime);
+	ret = write_loose_object(the_repository, oid, hdr, hdrlen, buf, len, mtime);
 	free(buf);
 
 	return ret;
