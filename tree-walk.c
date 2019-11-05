@@ -108,10 +108,11 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 	*a = t->entry;
 }
 
-static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err)
+static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err,
+									  const struct git_hash_algo *algo)
 {
 	const void *buf = desc->buffer;
-	const unsigned char *end = (const unsigned char *)desc->entry.path + desc->entry.pathlen + 1 + the_hash_algo->rawsz;
+	const unsigned char *end = (const unsigned char *)desc->entry.path + desc->entry.pathlen + 1 + algo->rawsz;
 	unsigned long size = desc->size;
 	unsigned long len = end - (const unsigned char *)buf;
 
@@ -129,7 +130,7 @@ static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err
 void update_tree_entry(struct tree_desc *desc)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (update_tree_entry_internal(desc, &err))
+	if (update_tree_entry_internal(desc, &err, the_hash_algo))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
@@ -137,7 +138,7 @@ void update_tree_entry(struct tree_desc *desc)
 int update_tree_entry_gently(struct tree_desc *desc)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (update_tree_entry_internal(desc, &err)) {
+	if (update_tree_entry_internal(desc, &err, the_hash_algo)) {
 		error("%s", err.buf);
 		strbuf_release(&err);
 		/* Stop processing this tree after error */
