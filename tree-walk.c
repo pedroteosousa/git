@@ -55,19 +55,21 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	return 0;
 }
 
-static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer, unsigned long size, struct strbuf *err)
+static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer,
+								   unsigned long size, struct strbuf *err,
+								   const struct git_hash_algo *algo)
 {
 	desc->buffer = buffer;
 	desc->size = size;
 	if (size)
-		return decode_tree_entry(desc, buffer, size, err, the_hash_algo);
+		return decode_tree_entry(desc, buffer, size, err, algo);
 	return 0;
 }
 
 void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (init_tree_desc_internal(desc, buffer, size, &err))
+	if (init_tree_desc_internal(desc, buffer, size, &err, the_hash_algo))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
@@ -75,7 +77,7 @@ void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long si
 int init_tree_desc_gently(struct tree_desc *desc, const void *buffer, unsigned long size)
 {
 	struct strbuf err = STRBUF_INIT;
-	int result = init_tree_desc_internal(desc, buffer, size, &err);
+	int result = init_tree_desc_internal(desc, buffer, size, &err, the_hash_algo);
 	if (result)
 		error("%s", err.buf);
 	strbuf_release(&err);
