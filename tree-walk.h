@@ -35,10 +35,13 @@ static inline int tree_entry_len(const struct name_entry *ne)
 
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define update_tree_entry(desc) update_tree_entry_algop(desc, the_hash_algo)
+#define init_tree_desc(desc, buf, size) \
+	init_tree_desc_algop(desc, buf, size, the_hash_algo)
 #endif
 void update_tree_entry_algop(struct tree_desc *, const struct git_hash_algo *);
 int update_tree_entry_gently(struct tree_desc *);
-void init_tree_desc(struct tree_desc *desc, const void *buf, unsigned long size);
+void init_tree_desc_algop(struct tree_desc *desc, const void *buf, unsigned long size,
+						  const struct git_hash_algo *algo);
 int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long size);
 
 /*

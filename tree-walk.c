@@ -66,10 +66,11 @@ static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer,
 	return 0;
 }
 
-void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
+void init_tree_desc_algop(struct tree_desc *desc, const void *buffer,
+						  unsigned long size, const struct git_hash_algo *algo)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (init_tree_desc_internal(desc, buffer, size, &err, the_hash_algo))
+	if (init_tree_desc_internal(desc, buffer, size, &err, algo))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
