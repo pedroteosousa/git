@@ -45,7 +45,10 @@ int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long
  * Helper function that does both tree_entry_extract() and update_tree_entry()
  * and returns true for success
  */
-int tree_entry(struct tree_desc *, struct name_entry *);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define tree_entry(desc, entry) tree_entry_algop(desc, entry, the_hash_algo)
+#endif
+int tree_entry_algop(struct tree_desc *, struct name_entry *, const struct git_hash_algo *);
 int tree_entry_gently(struct tree_desc *, struct name_entry *);
 
 void *fill_tree_descriptor(struct repository *r,

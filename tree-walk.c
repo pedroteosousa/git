@@ -150,13 +150,14 @@ int update_tree_entry_gently(struct tree_desc *desc)
 	return 0;
 }
 
-int tree_entry(struct tree_desc *desc, struct name_entry *entry)
+int tree_entry_algop(struct tree_desc *desc, struct name_entry *entry,
+					 const struct git_hash_algo *algo)
 {
 	if (!desc->size)
 		return 0;
 
 	*entry = desc->entry;
-	update_tree_entry(desc);
+	update_tree_entry_algop(desc, algo);
 	return 1;
 }
 
