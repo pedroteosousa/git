@@ -2020,10 +2020,10 @@ static unsigned char convert_num_notes_to_fanout(uintmax_t num_notes)
 }
 
 static void construct_path_with_fanout(const char *hex_sha1,
-		unsigned char fanout, char *path)
+		unsigned char fanout, char *path, const struct git_hash_algo *algo)
 {
 	unsigned int i = 0, j = 0;
-	if (fanout >= the_hash_algo->rawsz)
+	if (fanout >= algo->rawsz)
 		die("Too large fanout (%u)", fanout);
 	while (fanout) {
 		path[i++] = hex_sha1[j++];
@@ -2031,8 +2031,8 @@ static void construct_path_with_fanout(const char *hex_sha1,
 		path[i++] = '/';
 		fanout--;
 	}
-	memcpy(path + i, hex_sha1 + j, the_hash_algo->hexsz - j);
-	path[i + the_hash_algo->hexsz - j] = '\0';
+	memcpy(path + i, hex_sha1 + j, algo->hexsz - j);
+	path[i + algo->hexsz - j] = '\0';
 }
 
 static uintmax_t do_change_note_fanout(
@@ -2089,7 +2089,7 @@ static uintmax_t do_change_note_fanout(
 				num_notes++;
 				continue;
 			}
-			construct_path_with_fanout(hex_oid, fanout, realpath);
+			construct_path_with_fanout(hex_oid, fanout, realpath, the_hash_algo);
 			if (!strcmp(fullpath, realpath)) {
 				/* Note entry is in correct location */
 				num_notes++;
@@ -2441,7 +2441,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 			    type_name(type), command_buf.buf);
 	}
 
-	construct_path_with_fanout(oid_to_hex(&commit_oid), *old_fanout, path);
+	construct_path_with_fanout(oid_to_hex(&commit_oid), *old_fanout, path, the_hash_algo);
 	if (tree_content_remove(&b->branch_tree, path, NULL, 0))
 		b->num_notes--;
 
@@ -2450,7 +2450,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 
 	b->num_notes++;
 	new_fanout = convert_num_notes_to_fanout(b->num_notes);
-	construct_path_with_fanout(oid_to_hex(&commit_oid), new_fanout, path);
+	construct_path_with_fanout(oid_to_hex(&commit_oid), new_fanout, path, the_hash_algo);
 	tree_content_set(&b->branch_tree, path, &oid, S_IFREG | 0644, NULL);
 }
 
