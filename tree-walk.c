@@ -23,11 +23,12 @@ static const char *get_mode(const char *str, unsigned int *modep)
 	return str;
 }
 
-static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size, struct strbuf *err)
+static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size,
+							 struct strbuf *err, const struct git_hash_algo *algo)
 {
 	const char *path;
 	unsigned int mode, len;
-	const unsigned hashsz = the_hash_algo->rawsz;
+	const unsigned hashsz = algo->rawsz;
 
 	if (size < hashsz + 3 || buf[size - (hashsz + 1)]) {
 		strbuf_addstr(err, _("too-short tree object"));
@@ -49,7 +50,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 	desc->entry.path = path;
 	desc->entry.mode = canon_mode(mode);
 	desc->entry.pathlen = len - 1;
-	hashcpy(desc->entry.oid.hash, (const unsigned char *)path + len);
+	hashcpy_algop(desc->entry.oid.hash, (const unsigned char *)path + len, algo);
 
 	return 0;
 }
@@ -59,7 +60,7 @@ static int init_tree_desc_internal(struct tree_desc *desc, const void *buffer, u
 	desc->buffer = buffer;
 	desc->size = size;
 	if (size)
-		return decode_tree_entry(desc, buffer, size, err);
+		return decode_tree_entry(desc, buffer, size, err, the_hash_algo);
 	return 0;
 }
 
@@ -121,7 +122,7 @@ static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err
 	desc->buffer = buf;
 	desc->size = size;
 	if (size)
-		return decode_tree_entry(desc, buf, size, err);
+		return decode_tree_entry(desc, buf, size, err, algo);
 	return 0;
 }
 
