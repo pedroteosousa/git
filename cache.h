@@ -1105,9 +1105,13 @@ static inline int is_null_oid(const struct object_id *oid)
 	return hasheq(oid->hash, null_sha1);
 }
 
-static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define hashcpy(sha_dst, sha_src) hashcpy_algop(sha_dst, sha_src, the_hash_algo)
+#endif
+static inline void hashcpy_algop(unsigned char *sha_dst, const unsigned char *sha_src,
+								 const struct git_hash_algo *algo)
 {
-	memcpy(sha_dst, sha_src, the_hash_algo->rawsz);
+	memcpy(sha_dst, sha_src, algo->rawsz);
 }
 
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
