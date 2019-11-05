@@ -146,13 +146,13 @@ static int promisor_remote_config(const char *var, const char *value, void *data
 
 static int initialized;
 
-static void promisor_remote_init(void)
+static void promisor_remote_init(struct repository *r)
 {
 	if (initialized)
 		return;
 	initialized = 1;
 
-	git_config(promisor_remote_config, NULL);
+	repo_config(r, promisor_remote_config, NULL);
 
 	if (repository_format_partial_clone) {
 		struct promisor_remote *o, *previous;
@@ -181,12 +181,12 @@ void promisor_remote_reinit(void)
 {
 	initialized = 0;
 	promisor_remote_clear();
-	promisor_remote_init();
+	promisor_remote_init(the_repository);
 }
 
 struct promisor_remote *promisor_remote_find(const char *remote_name)
 {
-	promisor_remote_init();
+	promisor_remote_init(the_repository);
 
 	if (!remote_name)
 		return promisors;
@@ -241,7 +241,7 @@ int promisor_remote_get_direct(struct repository *repo,
 	int to_free = 0;
 	int res = -1;
 
-	promisor_remote_init();
+	promisor_remote_init(repo);
 
 	for (r = promisors; r; r = r->next) {
 		if (fetch_objects(r->name, remaining_oids, remaining_nr) < 0) {
