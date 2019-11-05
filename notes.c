@@ -533,11 +533,11 @@ static unsigned char determine_fanout(struct int_node *tree, unsigned char n,
 #define FANOUT_PATH_MAX GIT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS_MAX + 1
 
 static void construct_path_with_fanout(const unsigned char *hash,
-		unsigned char fanout, char *path)
+		unsigned char fanout, char *path, const struct git_hash_algo *algo)
 {
 	unsigned int i = 0, j = 0;
-	const char *hex_hash = hash_to_hex(hash);
-	assert(fanout < the_hash_algo->rawsz);
+	const char *hex_hash = hash_to_hex_algop(hash, algo);
+	assert(fanout < algo->rawsz);
 	while (fanout) {
 		path[i++] = hex_hash[j++];
 		path[i++] = hex_hash[j++];
@@ -591,7 +591,8 @@ redo:
 				assert(path_len < FANOUT_PATH_MAX - 1);
 				construct_path_with_fanout(l->key_oid.hash,
 							   fanout,
-							   path);
+							   path,
+							   the_hash_algo);
 				/* Create trailing slash, if needed */
 				if (path[path_len - 1] != '/')
 					path[path_len++] = '/';
@@ -612,7 +613,7 @@ redo:
 		case PTR_TYPE_NOTE:
 			l = (struct leaf_node *) CLR_PTR_TYPE(p);
 			construct_path_with_fanout(l->key_oid.hash, fanout,
-						   path);
+						   path, the_hash_algo);
 			ret = fn(&l->key_oid, &l->val_oid, path,
 				 cb_data);
 			break;
