@@ -33,7 +33,10 @@ static inline int tree_entry_len(const struct name_entry *ne)
  * corrupt tree entry rather than dying,
  */
 
-void update_tree_entry(struct tree_desc *);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define update_tree_entry(desc) update_tree_entry_algop(desc, the_hash_algo)
+#endif
+void update_tree_entry_algop(struct tree_desc *, const struct git_hash_algo *);
 int update_tree_entry_gently(struct tree_desc *);
 void init_tree_desc(struct tree_desc *desc, const void *buf, unsigned long size);
 int init_tree_desc_gently(struct tree_desc *desc, const void *buf, unsigned long size);

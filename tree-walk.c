@@ -127,10 +127,11 @@ static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err
 	return 0;
 }
 
-void update_tree_entry(struct tree_desc *desc)
+void update_tree_entry_algop(struct tree_desc *desc,
+							 const struct git_hash_algo *algo)
 {
 	struct strbuf err = STRBUF_INIT;
-	if (update_tree_entry_internal(desc, &err, the_hash_algo))
+	if (update_tree_entry_internal(desc, &err, algo))
 		die("%s", err.buf);
 	strbuf_release(&err);
 }
