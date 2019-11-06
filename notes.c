@@ -990,8 +990,8 @@ const char *default_notes_ref(void)
 	return notes_ref;
 }
 
-void init_notes(struct notes_tree *t, const char *notes_ref,
-		combine_notes_fn combine_notes, int flags)
+void repo_init_notes(struct repository *r, struct notes_tree *t,
+		const char *notes_ref, combine_notes_fn combine_notes, int flags)
 {
 	struct object_id oid, object_oid;
 	unsigned short mode;
@@ -1017,17 +1017,17 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	t->dirty = 0;
 
 	if (flags & NOTES_INIT_EMPTY || !notes_ref ||
-	    get_oid_treeish(notes_ref, &object_oid))
+	    repo_get_oid_treeish(r, notes_ref, &object_oid))
 		return;
-	if (flags & NOTES_INIT_WRITABLE && read_ref(notes_ref, &object_oid))
+	if (flags & NOTES_INIT_WRITABLE && repo_read_ref(r, notes_ref, &object_oid))
 		die("Cannot use notes ref %s", notes_ref);
-	if (get_tree_entry(the_repository, &object_oid, "", &oid, &mode))
+	if (get_tree_entry(r, &object_oid, "", &oid, &mode))
 		die("Failed to read notes tree referenced by %s (%s)",
 		    notes_ref, oid_to_hex(&object_oid));
 
 	oidclr(&root_tree.key_oid);
 	oidcpy(&root_tree.val_oid, &oid);
-	load_subtree(the_repository, t, &root_tree, t->root, 0);
+	load_subtree(r, t, &root_tree, t->root, 0);
 }
 
 struct notes_tree **load_notes_trees(struct string_list *refs, int flags)

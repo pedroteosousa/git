@@ -107,8 +107,12 @@ const char *default_notes_ref(void);
  * Precondition: The notes_tree structure is zeroed (this can be achieved with
  * memset(t, 0, sizeof(struct notes_tree)))
  */
-void init_notes(struct notes_tree *t, const char *notes_ref,
-		combine_notes_fn combine_notes, int flags);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define init_notes(t, notes_ref, combine_notes, flags) \
+	repo_init_notes(the_repository, t, notes_ref, combine_notes, flags)
+#endif
+void repo_init_notes(struct repository *r, struct notes_tree *t,
+		const char *notes_ref, combine_notes_fn combine_notes, int flags);
 
 /*
  * Add the given note object to the given notes_tree structure
