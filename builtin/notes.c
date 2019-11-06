@@ -389,7 +389,7 @@ static int list(int argc, const char **argv, const char *prefix)
 			retval = error(_("no note found for object %s."),
 				       oid_to_hex(&object));
 	} else
-		retval = for_each_note(t, 0, list_each_note, NULL);
+		retval = for_each_note(the_repository, t, 0, list_each_note, NULL);
 
 	free_notes(t);
 	return retval;

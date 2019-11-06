@@ -549,9 +549,9 @@ static void construct_path_with_fanout(const unsigned char *hash,
 	xsnprintf(path + i, FANOUT_PATH_MAX - i, "%s", hex_hash + j);
 }
 
-static int for_each_note_helper(struct notes_tree *t, struct int_node *tree,
-		unsigned char n, unsigned char fanout, int flags,
-		each_note_fn fn, void *cb_data)
+static int for_each_note_helper(struct repository *r, struct notes_tree *t,
+		struct int_node *tree, unsigned char n, unsigned char fanout,
+		int flags, each_note_fn fn, void *cb_data)
 {
 	unsigned int i;
 	void *p;
@@ -566,7 +566,7 @@ redo:
 		switch (GET_PTR_TYPE(p)) {
 		case PTR_TYPE_INTERNAL:
 			/* recurse into int_node */
-			ret = for_each_note_helper(t, CLR_PTR_TYPE(p), n + 1,
+			ret = for_each_note_helper(r, t, CLR_PTR_TYPE(p), n + 1,
 				fanout, flags, fn, cb_data);
 			break;
 		case PTR_TYPE_SUBTREE:
@@ -606,7 +606,7 @@ redo:
 			    !(flags & FOR_EACH_NOTE_DONT_UNPACK_SUBTREES)) {
 				/* unpack subtree and resume traversal */
 				tree->a[i] = NULL;
-				load_subtree(the_repository, t, l, tree, n);
+				load_subtree(r, t, l, tree, n);
 				free(l);
 				goto redo;
 			}
@@ -1156,13 +1156,13 @@ const struct object_id *get_note(struct notes_tree *t,
 	return found ? &found->val_oid : NULL;
 }
 
-int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
-		void *cb_data)
+int for_each_note(struct repository *r, struct notes_tree *t, int flags,
+		each_note_fn fn, void *cb_data)
 {
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	return for_each_note_helper(t, t->root, 0, 0, flags, fn, cb_data);
+	return for_each_note_helper(r, t, t->root, 0, 0, flags, fn, cb_data);
 }
 
 int write_notes_tree(struct notes_tree *t, struct object_id *result)
@@ -1187,7 +1187,7 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	/* Write tree objects representing current notes tree */
 	flags = FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
 		FOR_EACH_NOTE_YIELD_SUBTREES;
-	ret = for_each_note(t, flags, write_each_note, &cb_data) ||
+	ret = for_each_note(the_repository, t, flags, write_each_note, &cb_data) ||
 	      write_each_non_note_until(NULL, &cb_data) ||
 	      tree_write_stack_finish_subtree(&root) ||
 	      write_object_file(root.buf.buf, root.buf.len, tree_type, result);
@@ -1203,7 +1203,7 @@ void prune_notes(struct notes_tree *t, int flags)
 		t = &default_notes_tree;
 	assert(t->initialized);
 
-	for_each_note(t, 0, prune_notes_helper, &l);
+	for_each_note(the_repository, t, 0, prune_notes_helper, &l);
 
 	while (l) {
 		if (flags & NOTES_PRUNE_VERBOSE)

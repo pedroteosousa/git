@@ -219,8 +219,8 @@ int copy_note(struct notes_tree *t,
 typedef int each_note_fn(const struct object_id *object_oid,
 		const struct object_id *note_oid, char *note_path,
 		void *cb_data);
-int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
-		void *cb_data);
+int for_each_note(struct repository *r, struct notes_tree *t, int flags,
+		each_note_fn fn, void *cb_data);
 
 /*
  * Write the given notes_tree structure to the object database
