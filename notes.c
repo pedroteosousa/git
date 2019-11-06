@@ -78,8 +78,8 @@ struct notes_tree default_notes_tree;
 static struct string_list display_notes_refs = STRING_LIST_INIT_NODUP;
 static struct notes_tree **display_notes_trees;
 
-static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
-		struct int_node *node, unsigned int n);
+static void load_subtree(struct repository *r, struct notes_tree *t,
+		struct leaf_node *subtree, struct int_node *node, unsigned int n);
 
 /*
  * Search the tree until the appropriate location for the given key is found:
@@ -96,8 +96,8 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
  *      - an unused leaf node (NULL)
  *      In any case, set *tree and *n, and return pointer to the tree location.
  */
-static void **note_tree_search(struct notes_tree *t, struct int_node **tree,
-		unsigned char *n, const unsigned char *key_sha1)
+static void **note_tree_search(struct repository *r, struct notes_tree *t,
+		struct int_node **tree, unsigned char *n, const unsigned char *key_sha1)
 {
 	struct leaf_node *l;
 	unsigned char i;
@@ -108,9 +108,9 @@ static void **note_tree_search(struct notes_tree *t, struct int_node **tree,
 		if (!SUBTREE_SHA1_PREFIXCMP(key_sha1, l->key_oid.hash)) {
 			/* unpack tree and resume search */
 			(*tree)->a[0] = NULL;
-			load_subtree(t, l, *tree, *n);
+			load_subtree(r, t, l, *tree, *n);
 			free(l);
-			return note_tree_search(t, tree, n, key_sha1);
+			return note_tree_search(r, t, tree, n, key_sha1);
 		}
 	}
 
@@ -120,15 +120,15 @@ static void **note_tree_search(struct notes_tree *t, struct int_node **tree,
 	case PTR_TYPE_INTERNAL:
 		*tree = CLR_PTR_TYPE(p);
 		(*n)++;
-		return note_tree_search(t, tree, n, key_sha1);
+		return note_tree_search(r, t, tree, n, key_sha1);
 	case PTR_TYPE_SUBTREE:
 		l = (struct leaf_node *) CLR_PTR_TYPE(p);
 		if (!SUBTREE_SHA1_PREFIXCMP(key_sha1, l->key_oid.hash)) {
 			/* unpack tree and resume search */
 			(*tree)->a[i] = NULL;
-			load_subtree(t, l, *tree, *n);
+			load_subtree(r, t, l, *tree, *n);
 			free(l);
-			return note_tree_search(t, tree, n, key_sha1);
+			return note_tree_search(r, t, tree, n, key_sha1);
 		}
 		/* fall through */
 	default:
@@ -145,7 +145,7 @@ static struct leaf_node *note_tree_find(struct notes_tree *t,
 		struct int_node *tree, unsigned char n,
 		const unsigned char *key_sha1)
 {
-	void **p = note_tree_search(t, &tree, &n, key_sha1);
+	void **p = note_tree_search(the_repository, t, &tree, &n, key_sha1);
 	if (GET_PTR_TYPE(*p) == PTR_TYPE_NOTE) {
 		struct leaf_node *l = (struct leaf_node *) CLR_PTR_TYPE(*p);
 		if (hasheq(key_sha1, l->key_oid.hash))
@@ -194,14 +194,14 @@ static int note_tree_consolidate(struct int_node *tree,
  * - Replace the matching leaf_node with a NULL entry (and free the leaf_node).
  * - Consolidate int_nodes repeatedly, while walking up the tree towards root.
  */
-static void note_tree_remove(struct notes_tree *t,
+static void note_tree_remove(struct repository *r, struct notes_tree *t,
 		struct int_node *tree, unsigned char n,
 		struct leaf_node *entry)
 {
 	struct leaf_node *l;
 	struct int_node *parent_stack[GIT_MAX_RAWSZ];
 	unsigned char i, j;
-	void **p = note_tree_search(t, &tree, &n, entry->key_oid.hash);
+	void **p = note_tree_search(r, t, &tree, &n, entry->key_oid.hash);
 
 	assert(GET_PTR_TYPE(entry) == 0); /* no type bits set */
 	if (GET_PTR_TYPE(*p) != PTR_TYPE_NOTE)
@@ -245,13 +245,13 @@ static void note_tree_remove(struct notes_tree *t,
  * - Else, create a new int_node, holding both the node-at-location and the
  *   node-to-be-inserted, and store the new int_node into the location.
  */
-static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
-		unsigned char n, struct leaf_node *entry, unsigned char type,
-		combine_notes_fn combine_notes)
+static int note_tree_insert(struct repository *r, struct notes_tree *t,
+		struct int_node *tree, unsigned char n, struct leaf_node *entry,
+		unsigned char type, combine_notes_fn combine_notes)
 {
 	struct int_node *new_node;
 	struct leaf_node *l;
-	void **p = note_tree_search(t, &tree, &n, entry->key_oid.hash);
+	void **p = note_tree_search(r, t, &tree, &n, entry->key_oid.hash);
 	int ret = 0;
 
 	assert(GET_PTR_TYPE(entry) == 0); /* no type bits set */
@@ -277,7 +277,7 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 				ret = combine_notes(&l->val_oid,
 						    &entry->val_oid);
 				if (!ret && is_null_oid(&l->val_oid))
-					note_tree_remove(t, tree, n, entry);
+					note_tree_remove(r, t, tree, n, entry);
 				free(entry);
 				return ret;
 			}
@@ -286,7 +286,7 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 			if (!SUBTREE_SHA1_PREFIXCMP(l->key_oid.hash,
 						    entry->key_oid.hash)) {
 				/* unpack 'entry' */
-				load_subtree(t, entry, tree, n);
+				load_subtree(r, t, entry, tree, n);
 				free(entry);
 				return 0;
 			}
@@ -297,9 +297,9 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 		if (!SUBTREE_SHA1_PREFIXCMP(entry->key_oid.hash, l->key_oid.hash)) {
 			/* unpack 'l' and restart insert */
 			*p = NULL;
-			load_subtree(t, l, tree, n);
+			load_subtree(r, t, l, tree, n);
 			free(l);
-			return note_tree_insert(t, tree, n, entry, type,
+			return note_tree_insert(r, t, tree, n, entry, type,
 						combine_notes);
 		}
 		break;
@@ -313,12 +313,12 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 		return 0;
 	}
 	new_node = (struct int_node *) xcalloc(1, sizeof(struct int_node));
-	ret = note_tree_insert(t, new_node, n + 1, l, GET_PTR_TYPE(*p),
+	ret = note_tree_insert(r, t, new_node, n + 1, l, GET_PTR_TYPE(*p),
 			       combine_notes);
 	if (ret)
 		return ret;
 	*p = SET_PTR_TYPE(new_node, PTR_TYPE_INTERNAL);
-	return note_tree_insert(t, new_node, n + 1, entry, type, combine_notes);
+	return note_tree_insert(r, t, new_node, n + 1, entry, type, combine_notes);
 }
 
 /* Free the entire notes data contained in the given tree */
@@ -389,8 +389,8 @@ static void add_non_note(struct notes_tree *t, char *path,
 	p->next = n;
 }
 
-static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
-		struct int_node *node, unsigned int n)
+static void load_subtree(struct repository *r, struct notes_tree *t,
+		struct leaf_node *subtree, struct int_node *node, unsigned int n)
 {
 	struct object_id object_oid;
 	size_t prefix_len;
@@ -399,7 +399,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 	struct name_entry entry;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
-	buf = fill_tree_descriptor(the_repository, &desc, &subtree->val_oid);
+	buf = fill_tree_descriptor(r, &desc, &subtree->val_oid);
 	if (!buf)
 		die("Could not read %s for notes-index",
 		     oid_to_hex(&subtree->val_oid));
@@ -455,7 +455,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		l = xcalloc(1, sizeof(*l));
 		oidcpy(&l->key_oid, &object_oid);
 		oidcpy(&l->val_oid, &entry.oid);
-		if (note_tree_insert(t, node, n, l, type,
+		if (note_tree_insert(r, t, node, n, l, type,
 				     combine_notes_concatenate))
 			die("Failed to load %s %s into notes tree "
 			    "from %s",
@@ -606,7 +606,7 @@ redo:
 			    !(flags & FOR_EACH_NOTE_DONT_UNPACK_SUBTREES)) {
 				/* unpack subtree and resume traversal */
 				tree->a[i] = NULL;
-				load_subtree(t, l, tree, n);
+				load_subtree(the_repository, t, l, tree, n);
 				free(l);
 				goto redo;
 			}
@@ -1026,7 +1026,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 
 	oidclr(&root_tree.key_oid);
 	oidcpy(&root_tree.val_oid, &oid);
-	load_subtree(t, &root_tree, t->root, 0);
+	load_subtree(the_repository, t, &root_tree, t->root, 0);
 }
 
 struct notes_tree **load_notes_trees(struct string_list *refs, int flags)
@@ -1124,7 +1124,7 @@ int add_note(struct notes_tree *t, const struct object_id *object_oid,
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
 	oidcpy(&l->key_oid, object_oid);
 	oidcpy(&l->val_oid, note_oid);
-	return note_tree_insert(t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
+	return note_tree_insert(the_repository, t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
 }
 
 int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
@@ -1136,7 +1136,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	assert(t->initialized);
 	hashcpy(l.key_oid.hash, object_sha1);
 	oidclr(&l.val_oid);
-	note_tree_remove(t, t->root, 0, &l);
+	note_tree_remove(the_repository, t, t->root, 0, &l);
 	if (is_null_oid(&l.val_oid)) /* no note was removed */
 		return 1;
 	t->dirty = 1;
