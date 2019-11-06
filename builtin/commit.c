@@ -1671,7 +1671,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		extra = read_commit_extra_headers(current_head, exclude_gpgsig);
 	} else {
 		struct commit_extra_header **tail = &extra;
-		append_merge_tag_headers(parents, &tail);
+		append_merge_tag_headers(the_repository, parents, &tail);
 	}
 
 	if (commit_tree_extended(sb.buf, sb.len, &active_cache_tree->oid,

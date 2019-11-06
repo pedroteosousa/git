@@ -1103,7 +1103,8 @@ int remove_signature(struct strbuf *buf)
 	return sig_start != NULL;
 }
 
-static void handle_signed_tag(struct commit *parent, struct commit_extra_header ***tail)
+static void handle_signed_tag(struct repository *r, struct commit *parent,
+			struct commit_extra_header ***tail)
 {
 	struct merge_remote_desc *desc;
 	struct commit_extra_header *mergetag;
@@ -1114,7 +1115,7 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
 		return;
-	buf = read_object_file(&desc->obj->oid, &type, &size);
+	buf = repo_read_object_file(r, &desc->obj->oid, &type, &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
 	len = parse_signature(buf, size);
@@ -1193,12 +1194,12 @@ void verify_merge_signature(struct commit *commit, int verbosity,
 	signature_check_clear(&signature_check);
 }
 
-void append_merge_tag_headers(struct commit_list *parents,
+void append_merge_tag_headers(struct repository *r, struct commit_list *parents,
 			      struct commit_extra_header ***tail)
 {
 	while (parents) {
 		struct commit *parent = parents->item;
-		handle_signed_tag(parent, tail);
+		handle_signed_tag(r, parent, tail);
 		parents = parents->next;
 	}
 }
@@ -1323,7 +1324,7 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	struct commit_extra_header *extra = NULL, **tail = &extra;
 	int result;
 
-	append_merge_tag_headers(parents, &tail);
+	append_merge_tag_headers(the_repository, parents, &tail);
 	result = commit_tree_extended(msg, msg_len, tree, parents, ret,
 				      author, sign_commit, extra);
 	free_commit_extra_headers(extra);

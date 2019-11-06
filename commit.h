@@ -306,7 +306,7 @@ struct commit_extra_header {
 	size_t len;
 };
 
-void append_merge_tag_headers(struct commit_list *parents,
+void append_merge_tag_headers(struct repository *r, struct commit_list *parents,
 			      struct commit_extra_header ***tail);
 
 int commit_tree(const char *msg, size_t msg_len,
