@@ -1408,7 +1408,7 @@ static int try_to_commit(struct repository *r,
 
 	reset_ident_date();
 
-	if (commit_tree_extended(msg->buf, msg->len, &tree, parents,
+	if (commit_tree_extended(the_repository, msg->buf, msg->len, &tree, parents,
 				 oid, author, opts->gpg_sign, extra)) {
 		res = error(_("failed to write commit object"));
 		goto out;

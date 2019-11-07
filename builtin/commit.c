@@ -1674,7 +1674,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		append_merge_tag_headers(the_repository, parents, &tail);
 	}
 
-	if (commit_tree_extended(sb.buf, sb.len, &active_cache_tree->oid,
+	if (commit_tree_extended(the_repository, sb.buf, sb.len, &active_cache_tree->oid,
 				 parents, &oid, author_ident.buf, sign_commit,
 				 extra)) {
 		rollback_index_files();

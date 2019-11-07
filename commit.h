@@ -314,7 +314,7 @@ int commit_tree(const char *msg, size_t msg_len,
 		struct commit_list *parents, struct object_id *ret,
 		const char *author, const char *sign_commit);
 
-int commit_tree_extended(const char *msg, size_t msg_len,
+int commit_tree_extended(struct repository *r, const char *msg, size_t msg_len,
 			 const struct object_id *tree,
 			 struct commit_list *parents,
 			 struct object_id *ret, const char *author,
