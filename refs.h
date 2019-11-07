@@ -732,9 +732,13 @@ int refs_update_ref(struct repository *r, struct ref_store *refs,
 		const char *msg, const char *refname, const struct object_id *new_oid,
 		const struct object_id *old_oid, unsigned int flags,
 		enum action_on_err onerr);
-int update_ref(const char *msg, const char *refname,
-	       const struct object_id *new_oid, const struct object_id *old_oid,
-	       unsigned int flags, enum action_on_err onerr);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define update_ref(msg, refname, new_oid, old_oid, flags, onerr) \
+	repo_update_ref(the_repository, msg, refname, new_oid, old_oid, flags, onerr)
+#endif
+int repo_update_ref(struct repository *r, const char *msg, const char *refname,
+		const struct object_id *new_oid, const struct object_id *old_oid,
+		unsigned int flags, enum action_on_err onerr);
 
 int parse_hide_refs_config(const char *var, const char *value, const char *);
 

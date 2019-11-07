@@ -1252,13 +1252,12 @@ int refs_update_ref(struct repository *r, struct ref_store *refs,
 	return 0;
 }
 
-int update_ref(const char *msg, const char *refname,
-	       const struct object_id *new_oid,
-	       const struct object_id *old_oid,
-	       unsigned int flags, enum action_on_err onerr)
+int repo_update_ref(struct repository *r, const char *msg, const char *refname,
+		const struct object_id *new_oid, const struct object_id *old_oid,
+		unsigned int flags, enum action_on_err onerr)
 {
-	return refs_update_ref(the_repository, get_main_ref_store(the_repository),
-			msg, refname, new_oid, old_oid, flags, onerr);
+	return refs_update_ref(r, get_main_ref_store(r), msg, refname, new_oid,
+			old_oid, flags, onerr);
 }
 
 char *refs_shorten_unambiguous_ref(struct ref_store *refs,
