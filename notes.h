@@ -154,8 +154,11 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  *
  * Return NULL if the given object has no notes.
  */
-const struct object_id *get_note(struct notes_tree *t,
-		const struct object_id *object_oid);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define get_note(t, object_oid) repo_get_note(the_repository, t, object_oid)
+#endif
+const struct object_id *repo_get_note(struct repository *r,
+		struct notes_tree *t, const struct object_id *object_oid);
 
 /*
  * Copy a note from one object to another in the given notes_tree.

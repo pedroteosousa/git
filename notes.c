@@ -1145,15 +1145,15 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 	return 0;
 }
 
-const struct object_id *get_note(struct notes_tree *t,
-		const struct object_id *oid)
+const struct object_id *repo_get_note(struct repository *r,
+		struct notes_tree *t, const struct object_id *oid)
 {
 	struct leaf_node *found;
 
 	if (!t)
 		t = &default_notes_tree;
 	assert(t->initialized);
-	found = note_tree_find(the_repository, t, t->root, 0, oid->hash);
+	found = note_tree_find(r, t, t->root, 0, oid->hash);
 	return found ? &found->val_oid : NULL;
 }
 
