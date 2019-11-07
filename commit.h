@@ -15,6 +15,8 @@
 #define GENERATION_NUMBER_MAX 0x3FFFFFFF
 #define GENERATION_NUMBER_ZERO 0
 
+struct repository;
+
 struct commit_list {
 	struct commit *item;
 	struct commit_list *next;
@@ -309,10 +311,13 @@ struct commit_extra_header {
 void append_merge_tag_headers(struct repository *r, struct commit_list *parents,
 			      struct commit_extra_header ***tail);
 
-int commit_tree(const char *msg, size_t msg_len,
-		const struct object_id *tree,
-		struct commit_list *parents, struct object_id *ret,
-		const char *author, const char *sign_commit);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define commit_tree(msg, msg_len, tree, parents, ret, author, sign_commit) \
+	repo_commit_tree(the_repository, msg, msg_len, tree, parents, ret, author, sign_commit)
+#endif
+int repo_commit_tree(struct repository *r, const char *msg, size_t msg_len,
+		const struct object_id *tree, struct commit_list *parents,
+		struct object_id *ret, const char *author, const char *sign_commit);
 
 int commit_tree_extended(struct repository *r, const char *msg, size_t msg_len,
 			 const struct object_id *tree,
