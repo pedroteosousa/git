@@ -87,12 +87,12 @@ char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 	return value;
 }
 
-int notes_cache_put(struct notes_cache *c, struct object_id *key_oid,
-		    const char *data, size_t size)
+int notes_cache_put(struct repository *r, struct notes_cache *c,
+		struct object_id *key_oid, const char *data, size_t size)
 {
 	struct object_id value_oid;
 
-	if (write_object_file(data, size, "blob", &value_oid) < 0)
+	if (repo_write_object_file(r, data, size, "blob", &value_oid) < 0)
 		return -1;
-	return add_note(&c->tree, key_oid, &value_oid, NULL);
+	return repo_add_note(r, &c->tree, key_oid, &value_oid, NULL);
 }

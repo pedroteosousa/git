@@ -16,7 +16,7 @@ int notes_cache_write(struct notes_cache *c);
 
 char *notes_cache_get(struct notes_cache *c, struct object_id *oid, size_t
 		      *outsize);
-int notes_cache_put(struct notes_cache *c, struct object_id *oid,
-		    const char *data, size_t size);
+int notes_cache_put(struct repository *r, struct notes_cache *c,
+		struct object_id *oid, const char *data, size_t size);
 
 #endif /* NOTES_CACHE_H */
