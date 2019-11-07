@@ -785,8 +785,9 @@ long get_files_ref_lock_timeout_ms(void)
 	return timeout_ms;
 }
 
-static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
-			   const struct object_id *old_oid, struct strbuf *err)
+static int write_pseudoref(struct repository *r, const char *pseudoref,
+		const struct object_id *oid, const struct object_id *old_oid,
+		struct strbuf *err)
 {
 	const char *filename;
 	int fd;
@@ -799,7 +800,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 
 	strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 
-	filename = git_path("%s", pseudoref);
+	filename = repo_git_path(r, "%s", pseudoref);
 	fd = hold_lock_file_for_update_timeout(&lock, filename, 0,
 					       get_files_ref_lock_timeout_ms());
 	if (fd < 0) {
@@ -811,7 +812,7 @@ static int write_pseudoref(const char *pseudoref, const struct object_id *oid,
 	if (old_oid) {
 		struct object_id actual_old_oid;
 
-		if (read_ref(pseudoref, &actual_old_oid)) {
+		if (repo_read_ref(r, pseudoref, &actual_old_oid)) {
 			if (!is_null_oid(old_oid)) {
 				strbuf_addf(err, _("could not read ref '%s'"),
 					    pseudoref);
@@ -1207,18 +1208,18 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 				      flags, NULL, err);
 }
 
-int refs_update_ref(struct ref_store *refs, const char *msg,
-		    const char *refname, const struct object_id *new_oid,
-		    const struct object_id *old_oid, unsigned int flags,
-		    enum action_on_err onerr)
+int refs_update_ref(struct repository *r, struct ref_store *refs,
+		const char *msg, const char *refname, const struct object_id *new_oid,
+		const struct object_id *old_oid, unsigned int flags,
+		enum action_on_err onerr)
 {
 	struct ref_transaction *t = NULL;
 	struct strbuf err = STRBUF_INIT;
 	int ret = 0;
 
 	if (ref_type(refname) == REF_TYPE_PSEUDOREF) {
-		assert(refs == get_main_ref_store(the_repository));
-		ret = write_pseudoref(refname, new_oid, old_oid, &err);
+		assert(refs == get_main_ref_store(r));
+		ret = write_pseudoref(r, refname, new_oid, old_oid, &err);
 	} else {
 		t = ref_store_transaction_begin(refs, &err);
 		if (!t ||
@@ -1256,8 +1257,8 @@ int update_ref(const char *msg, const char *refname,
 	       const struct object_id *old_oid,
 	       unsigned int flags, enum action_on_err onerr)
 {
-	return refs_update_ref(get_main_ref_store(the_repository), msg, refname, new_oid,
-			       old_oid, flags, onerr);
+	return refs_update_ref(the_repository, get_main_ref_store(the_repository),
+			msg, refname, new_oid, old_oid, flags, onerr);
 }
 
 char *refs_shorten_unambiguous_ref(struct ref_store *refs,

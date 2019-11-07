@@ -243,7 +243,7 @@ static int cmd_update_ref(struct ref_store *refs, const char **argv)
 	    get_oid_hex(new_sha1_buf, &new_oid))
 		die("not sha-1");
 
-	return refs_update_ref(refs, msg, refname,
+	return refs_update_ref(the_repository, refs, msg, refname,
 			       &new_oid, &old_oid,
 			       flags, UPDATE_REFS_DIE_ON_ERR);
 }
