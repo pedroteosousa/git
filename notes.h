@@ -4,6 +4,7 @@
 #include "string-list.h"
 
 struct object_id;
+struct repository;
 struct strbuf;
 
 /*
@@ -129,8 +130,13 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-int add_note(struct notes_tree *t, const struct object_id *object_oid,
-		const struct object_id *note_oid, combine_notes_fn combine_notes);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define add_note(t, object_oid, note_oid, combine_notes) \
+	repo_add_note(the_repository, t, object_oid, note_oid, combine_notes)
+#endif
+int repo_add_note(struct repository *r, struct notes_tree *t,
+		const struct object_id *object_oid, const struct object_id *note_oid,
+		combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure

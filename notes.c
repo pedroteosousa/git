@@ -1110,8 +1110,9 @@ void load_display_notes(struct display_notes_opt *opt)
 	string_list_clear(&display_notes_refs, 0);
 }
 
-int add_note(struct notes_tree *t, const struct object_id *object_oid,
-		const struct object_id *note_oid, combine_notes_fn combine_notes)
+int repo_add_note(struct repository *r, struct notes_tree *t,
+		const struct object_id *object_oid, const struct object_id *note_oid,
+		combine_notes_fn combine_notes)
 {
 	struct leaf_node *l;
 
@@ -1124,7 +1125,7 @@ int add_note(struct notes_tree *t, const struct object_id *object_oid,
 	l = (struct leaf_node *) xmalloc(sizeof(struct leaf_node));
 	oidcpy(&l->key_oid, object_oid);
 	oidcpy(&l->val_oid, note_oid);
-	return note_tree_insert(the_repository, t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
+	return note_tree_insert(r, t, t->root, 0, l, PTR_TYPE_NOTE, combine_notes);
 }
 
 int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
