@@ -663,16 +663,17 @@ static void tree_write_stack_init_subtree(struct tree_write_stack *tws,
 	tws->path[1] = path[1];
 }
 
-static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
+static int tree_write_stack_finish_subtree(struct repository *r,
+		struct tree_write_stack *tws)
 {
 	int ret;
 	struct tree_write_stack *n = tws->next;
 	struct object_id s;
 	if (n) {
-		ret = tree_write_stack_finish_subtree(n);
+		ret = tree_write_stack_finish_subtree(r, n);
 		if (ret)
 			return ret;
-		ret = write_object_file(n->buf.buf, n->buf.len, tree_type, &s);
+		ret = repo_write_object_file(r, n->buf.buf, n->buf.len, tree_type, &s);
 		if (ret)
 			return ret;
 		strbuf_release(&n->buf);
@@ -700,7 +701,7 @@ static int write_each_note_helper(struct tree_write_stack *tws,
 	}
 
 	/* tws point to last matching tree_write_stack entry */
-	ret = tree_write_stack_finish_subtree(tws);
+	ret = tree_write_stack_finish_subtree(the_repository, tws);
 	if (ret)
 		return ret;
 
@@ -1189,7 +1190,7 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 		FOR_EACH_NOTE_YIELD_SUBTREES;
 	ret = for_each_note(the_repository, t, flags, write_each_note, &cb_data) ||
 	      write_each_non_note_until(NULL, &cb_data) ||
-	      tree_write_stack_finish_subtree(&root) ||
+	      tree_write_stack_finish_subtree(the_repository, &root) ||
 	      write_object_file(root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
 	return ret;
