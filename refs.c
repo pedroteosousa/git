@@ -300,9 +300,10 @@ int refs_read_ref_full(struct ref_store *refs, const char *refname,
 	return -1;
 }
 
-int read_ref_full(const char *refname, int resolve_flags, struct object_id *oid, int *flags)
+int repo_read_ref_full(struct repository *r, const char *refname,
+		int resolve_flags, struct object_id *oid, int *flags)
 {
-	return refs_read_ref_full(get_main_ref_store(the_repository), refname,
+	return refs_read_ref_full(get_main_ref_store(r), refname,
 				  resolve_flags, oid, flags);
 }
 

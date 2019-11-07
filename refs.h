@@ -77,8 +77,12 @@ char *resolve_refdup(const char *refname, int resolve_flags,
 
 int refs_read_ref_full(struct ref_store *refs, const char *refname,
 		       int resolve_flags, struct object_id *oid, int *flags);
-int read_ref_full(const char *refname, int resolve_flags,
-		  struct object_id *oid, int *flags);
+#ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
+#define read_ref_full(refname, resolve_flags, oid, flags) \
+	repo_read_ref_full(the_repository, refname, resolve_flags, oid, flags)
+#endif
+int repo_read_ref_full(struct repository *r, const char *refname,
+		int resolve_flags, struct object_id *oid, int *flags);
 int read_ref(const char *refname, struct object_id *oid);
 
 /*
