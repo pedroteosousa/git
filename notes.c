@@ -685,8 +685,8 @@ static int tree_write_stack_finish_subtree(struct repository *r,
 	return 0;
 }
 
-static int write_each_note_helper(struct tree_write_stack *tws,
-		const char *path, unsigned int mode,
+static int write_each_note_helper(struct repository *r,
+		struct tree_write_stack *tws, const char *path, unsigned int mode,
 		const struct object_id *oid)
 {
 	size_t path_len = strlen(path);
@@ -701,7 +701,7 @@ static int write_each_note_helper(struct tree_write_stack *tws,
 	}
 
 	/* tws point to last matching tree_write_stack entry */
-	ret = tree_write_stack_finish_subtree(the_repository, tws);
+	ret = tree_write_stack_finish_subtree(r, tws);
 	if (ret)
 		return ret;
 
@@ -738,7 +738,7 @@ static int write_each_non_note_until(const char *note_path,
 		if (note_path && cmp == 0)
 			; /* do nothing, prefer note to non-note */
 		else {
-			ret = write_each_note_helper(d->root, n->path, n->mode,
+			ret = write_each_note_helper(the_repository, d->root, n->path, n->mode,
 						     &n->oid);
 			if (ret)
 				return ret;
@@ -769,7 +769,7 @@ static int write_each_note(const struct object_id *object_oid,
 
 	/* Weave non-note entries into note entries */
 	return  write_each_non_note_until(note_path, d) ||
-		write_each_note_helper(d->root, note_path, mode, note_oid);
+		write_each_note_helper(the_repository, d->root, note_path, mode, note_oid);
 }
 
 struct note_delete_list {
