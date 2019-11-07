@@ -55,7 +55,7 @@ static int parse_parent_arg_callback(const struct option *opt,
 	if (get_oid_commit(arg, &oid))
 		die(_("not a valid object name %s"), arg);
 
-	assert_oid_type(&oid, OBJ_COMMIT);
+	assert_oid_type(the_repository, &oid, OBJ_COMMIT);
 	new_parent(lookup_commit(the_repository, &oid), parents);
 	return 0;
 }

@@ -2249,9 +2249,10 @@ int read_pack_header(int fd, struct pack_header *header)
 	return 0;
 }
 
-void assert_oid_type(const struct object_id *oid, enum object_type expect)
+void assert_oid_type(struct repository *r, const struct object_id *oid,
+		enum object_type expect)
 {
-	enum object_type type = oid_object_info(the_repository, oid, NULL);
+	enum object_type type = oid_object_info(r, oid, NULL);
 	if (type < 0)
 		die(_("%s is not a valid object"), oid_to_hex(oid));
 	if (type != expect)

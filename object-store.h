@@ -265,7 +265,8 @@ int repo_has_object_file_with_flags(struct repository *r,
  */
 int has_loose_object_nonlocal(const struct object_id *);
 
-void assert_oid_type(const struct object_id *oid, enum object_type expect);
+void assert_oid_type(struct repository *r, const struct object_id *oid,
+		enum object_type expect);
 
 /*
  * Enabling the object read lock allows multiple threads to safely call the
