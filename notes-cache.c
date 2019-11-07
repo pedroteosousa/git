@@ -70,18 +70,18 @@ int notes_cache_write(struct repository *r, struct notes_cache *c)
 	return 0;
 }
 
-char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
-		      size_t *outsize)
+char *notes_cache_get(struct repository *r, struct notes_cache *c,
+		struct object_id *key_oid, size_t *outsize)
 {
 	const struct object_id *value_oid;
 	enum object_type type;
 	char *value;
 	unsigned long size;
 
-	value_oid = get_note(&c->tree, key_oid);
+	value_oid = repo_get_note(r, &c->tree, key_oid);
 	if (!value_oid)
 		return NULL;
-	value = read_object_file(value_oid, &type, &size);
+	value = repo_read_object_file(r, value_oid, &type, &size);
 
 	*outsize = size;
 	return value;

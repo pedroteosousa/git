@@ -6784,7 +6784,7 @@ size_t fill_textconv(struct repository *r,
 		BUG("fill_textconv called with non-textconv driver");
 
 	if (driver->textconv_cache && df->oid_valid) {
-		*outbuf = notes_cache_get(driver->textconv_cache,
+		*outbuf = notes_cache_get(r, driver->textconv_cache,
 					  &df->oid,
 					  &size);
 		if (*outbuf)
