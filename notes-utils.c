@@ -15,7 +15,7 @@ void create_notes_commit(struct repository *r,
 
 	assert(t->initialized);
 
-	if (write_notes_tree(t, &tree_oid))
+	if (write_notes_tree(the_repository, t, &tree_oid))
 		die("Failed to write notes tree to database");
 
 	if (!parents) {

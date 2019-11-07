@@ -234,7 +234,8 @@ int for_each_note(struct repository *r, struct notes_tree *t, int flags,
  * this function has returned zero. Please also remember to create a
  * corresponding commit object, and update the appropriate notes ref.
  */
-int write_notes_tree(struct notes_tree *t, struct object_id *result);
+int write_notes_tree(struct repository *r, struct notes_tree *t,
+		struct object_id *result);
 
 /* Flags controlling the operation of prune */
 #define NOTES_PRUNE_VERBOSE 1

@@ -1166,7 +1166,8 @@ int for_each_note(struct repository *r, struct notes_tree *t, int flags,
 	return for_each_note_helper(r, t, t->root, 0, 0, flags, fn, cb_data);
 }
 
-int write_notes_tree(struct notes_tree *t, struct object_id *result)
+int write_notes_tree(struct repository *r, struct notes_tree *t,
+		struct object_id *result)
 {
 	struct tree_write_stack root;
 	struct write_each_note_data cb_data;
@@ -1188,10 +1189,10 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	/* Write tree objects representing current notes tree */
 	flags = FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
 		FOR_EACH_NOTE_YIELD_SUBTREES;
-	ret = for_each_note(the_repository, t, flags, write_each_note, &cb_data) ||
-	      write_each_non_note_until(the_repository, NULL, &cb_data) ||
-	      tree_write_stack_finish_subtree(the_repository, &root) ||
-	      write_object_file(root.buf.buf, root.buf.len, tree_type, result);
+	ret = for_each_note(r, t, flags, write_each_note, &cb_data) ||
+	      write_each_non_note_until(r, NULL, &cb_data) ||
+	      tree_write_stack_finish_subtree(r, &root) ||
+	      repo_write_object_file(r, root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
 	return ret;
 }
