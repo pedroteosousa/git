@@ -728,8 +728,8 @@ struct write_each_note_data {
 	struct non_note *nn_prev;
 };
 
-static int write_each_non_note_until(const char *note_path,
-		struct write_each_note_data *d)
+static int write_each_non_note_until(struct repository *r,
+		const char *note_path, struct write_each_note_data *d)
 {
 	struct non_note *p = d->nn_prev;
 	struct non_note *n = p ? p->next : *d->nn_list;
@@ -738,7 +738,7 @@ static int write_each_non_note_until(const char *note_path,
 		if (note_path && cmp == 0)
 			; /* do nothing, prefer note to non-note */
 		else {
-			ret = write_each_note_helper(the_repository, d->root, n->path, n->mode,
+			ret = write_each_note_helper(r, d->root, n->path, n->mode,
 						     &n->oid);
 			if (ret)
 				return ret;
@@ -768,7 +768,7 @@ static int write_each_note(const struct object_id *object_oid,
 	assert(note_path_len <= GIT_MAX_HEXSZ + FANOUT_PATH_SEPARATORS);
 
 	/* Weave non-note entries into note entries */
-	return  write_each_non_note_until(note_path, d) ||
+	return  write_each_non_note_until(the_repository, note_path, d) ||
 		write_each_note_helper(the_repository, d->root, note_path, mode, note_oid);
 }
 
@@ -1189,7 +1189,7 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	flags = FOR_EACH_NOTE_DONT_UNPACK_SUBTREES |
 		FOR_EACH_NOTE_YIELD_SUBTREES;
 	ret = for_each_note(the_repository, t, flags, write_each_note, &cb_data) ||
-	      write_each_non_note_until(NULL, &cb_data) ||
+	      write_each_non_note_until(the_repository, NULL, &cb_data) ||
 	      tree_write_stack_finish_subtree(the_repository, &root) ||
 	      write_object_file(root.buf.buf, root.buf.len, tree_type, result);
 	strbuf_release(&root.buf);
