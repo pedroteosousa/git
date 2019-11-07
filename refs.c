@@ -307,9 +307,10 @@ int repo_read_ref_full(struct repository *r, const char *refname,
 				  resolve_flags, oid, flags);
 }
 
-int read_ref(const char *refname, struct object_id *oid)
+int repo_read_ref(struct repository *r, const char *refname,
+		struct object_id *oid)
 {
-	return read_ref_full(refname, RESOLVE_REF_READING, oid, NULL);
+	return repo_read_ref_full(r, refname, RESOLVE_REF_READING, oid, NULL);
 }
 
 static int refs_ref_exists(struct ref_store *refs, const char *refname)

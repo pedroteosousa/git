@@ -80,10 +80,13 @@ int refs_read_ref_full(struct ref_store *refs, const char *refname,
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
 #define read_ref_full(refname, resolve_flags, oid, flags) \
 	repo_read_ref_full(the_repository, refname, resolve_flags, oid, flags)
+#define read_ref(refname, oid) \
+	repo_read_ref(the_repository, refname, oid)
 #endif
 int repo_read_ref_full(struct repository *r, const char *refname,
 		int resolve_flags, struct object_id *oid, int *flags);
-int read_ref(const char *refname, struct object_id *oid);
+int repo_read_ref(struct repository *r, const char *refname,
+		struct object_id *oid);
 
 /*
  * Return 0 if a reference named refname could be created without
