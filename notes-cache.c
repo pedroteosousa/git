@@ -15,7 +15,7 @@ static int notes_cache_match_validity(struct repository *r,
 	struct strbuf msg = STRBUF_INIT;
 	int ret;
 
-	if (read_ref(ref, &oid) < 0)
+	if (repo_read_ref(r, ref, &oid) < 0)
 		return 0;
 
 	commit = lookup_commit_reference_gently(r, &oid, 1);
