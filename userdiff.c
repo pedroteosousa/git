@@ -330,7 +330,7 @@ struct userdiff_driver *userdiff_get_textconv(struct repository *r,
 	if (!driver->textconv)
 		return NULL;
 
-	if (driver->textconv_want_cache && !driver->textconv_cache) {
+	if (driver->textconv_want_cache) {
 		struct notes_cache *c = xmalloc(sizeof(*c));
 		struct strbuf name = STRBUF_INIT;
 
